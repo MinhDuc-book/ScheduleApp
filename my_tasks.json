@@ -1,0 +1,18 @@
+[
+  {
+    "titleTask": "Tín hiệu hệ thống",
+    "timeOfTask": "9:50",
+    "placeofTask": "GĐ3",
+    "noteOfTask": "Note",
+    "layoutX": 51.0,
+    "layoutY": 128.0
+  },
+  {
+    "titleTask": "Mạng máy tính",
+    "timeOfTask": "13:30",
+    "placeofTask": "GĐ3",
+    "noteOfTask": "Note",
+    "layoutX": 238.0,
+    "layoutY": 403.0
+  }
+]
