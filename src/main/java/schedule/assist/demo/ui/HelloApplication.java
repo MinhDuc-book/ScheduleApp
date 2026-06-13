@@ -36,7 +36,7 @@ public class HelloApplication extends Application {
     @Override
     public void start(Stage stage) {
         root = new AnchorPane();
-        root.setStyle("-fx-background-color: #f0f0f0;");
+        root.setStyle("-fx-background-color: #fdfd96;");
 
         TaskService taskService = new TaskServiceImpl(root, taskRepository, taskList);
 

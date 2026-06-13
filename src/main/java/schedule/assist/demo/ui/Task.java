@@ -22,6 +22,8 @@ public class Task extends VBox {
     protected String timeOfTask = "10:00";
     protected String noteOfTask = "Note";
     protected String placeofTask = "GĐ3";
+    protected String colorTaskSchool = "-fx-background-color: #00E8FF;";
+    protected String colorTaskHome = "-fx-background-color: #FFEA00;";
 
     protected static final double NORMAL_SPACING = 4;
     protected static final double EDIT_SPACING = 12;
@@ -32,7 +34,7 @@ public class Task extends VBox {
 
     public Runnable onDelete = () -> {};
 
-    public final String BASE_STYLE = "-fx-background-color: white;" +
+    public String BASE_STYLE =
             "-fx-background-radius: 12;" +
             "-fx-padding: 16;" +
             "-fx-border-color: #e0e0e0;" +
@@ -40,7 +42,8 @@ public class Task extends VBox {
             "-fx-border-width: 1;" +
             "-fx-cursor: hand;";
 
-    public final String SCALE_STYLE = "-fx-background-color: white;" +
+
+    public String SCALE_STYLE = "-fx-background-color: white;" +
             "-fx-background-radius: 16;" +
             "-fx-padding: 20;" +
             "-fx-border-color: #4A90E2;" +
@@ -49,24 +52,24 @@ public class Task extends VBox {
             "-fx-cursor: default;";
 
 
-
     public Task() {
         setupUITask();
     }
 
     public void setTitleTask(String t) {
         this.titleTask = t;
-        if (titleLabel != null) titleLabel.setText("📅 " + t);
+        titleLabel.setText("📅 " + t);
     }
 
     public void setTimeOfTask(String t) {
         this.timeOfTask = t;
-        if (timeLabel != null) timeLabel.setText("🕐 " + t);
+        timeLabel.setText("🕐 " + t);
     }
 
     public void setPlaceofTask(String n) {
         this.placeofTask = n;
-        if (placeLabel != null) placeLabel.setText("📍 " + n);
+        placeLabel.setText("📍 " + n);
+        this.setStyle(setColorFromPlace());
     }
 
     public void setNoteOfTask(String n) {
@@ -86,13 +89,22 @@ public class Task extends VBox {
         }
     }
 
+    public String setColorFromPlace() {
+        String color = "";
+        if (placeofTask.contains("Home")) {
+            color = colorTaskHome;
+            return color + BASE_STYLE;
+        }
+        return colorTaskSchool + BASE_STYLE;
+    }
+
     public Task setupUITask() {
         titleLabel = new Label("📅 " + titleTask);
         timeLabel = new Label("🕐 " + timeOfTask);
         placeLabel = new Label("📍 " + placeofTask);
 
         this.setPrefSize(160, 85);
-        this.setStyle(BASE_STYLE);
+        this.setStyle(setColorFromPlace());
         this.setSpacing(NORMAL_SPACING);
 
         DropShadow shadow = new DropShadow();
@@ -113,7 +125,7 @@ public class Task extends VBox {
 
             dragOffsetX = e.getSceneX() - this.getLayoutX();
             dragOffsetY = e.getSceneY() - this.getLayoutY();
-            this.setStyle(BASE_STYLE.replace("-fx-cursor: hand;", "-fx-cursor: closed-hand;"));
+            this.setStyle(setColorFromPlace().replace("-fx-cursor: hand;", "-fx-cursor: closed-hand;"));
 
             // Bring to front
             bringToTop();
@@ -127,7 +139,7 @@ public class Task extends VBox {
         });
 
         this.setOnMouseReleased(e -> {
-            this.setStyle(BASE_STYLE);
+            this.setStyle(setColorFromPlace());
         });
 
         // edit

@@ -99,9 +99,11 @@ public class TaskEditor{
     private void saveAndCollapse(TextField titleField, TextField timeField,
                                  TextField placeField, TextArea noteArea) {
 
+
         if (!titleField.getText().trim().isEmpty()) task.titleTask = titleField.getText().trim();
         if (!timeField.getText().trim().isEmpty()) task.timeOfTask = timeField.getText().trim();
         if (!placeField.getText().trim().isEmpty()) task.placeofTask = placeField.getText().trim();
+        task.setColorFromPlace();
         task.noteOfTask = noteArea.getText().trim();
 
         // Animation collapse
@@ -125,14 +127,17 @@ public class TaskEditor{
             task.timeLabel.setText("🕐 " + task.timeOfTask);
             task.placeLabel.setText("📍 " + task.placeofTask);
 
+
+
             task.getChildren().setAll(task.titleLabel, task.timeLabel, task.placeLabel);
-            task.setStyle(task.BASE_STYLE);
+            task.setStyle(task.setColorFromPlace());
             task.setSpacing(task.NORMAL_SPACING);
 
             // Reset scale
             task.setScaleX(1.0);
             task.setScaleY(1.0);
         });
+
     }
 
     private VBox labeledField(String labelText, Control field) {

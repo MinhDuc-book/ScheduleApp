@@ -4,15 +4,47 @@
     "timeOfTask": "9:50",
     "placeofTask": "GĐ3",
     "noteOfTask": "Note",
-    "layoutX": 51.0,
-    "layoutY": 128.0
+    "layoutX": 50.0,
+    "layoutY": 166.5
   },
   {
     "titleTask": "Mạng máy tính",
     "timeOfTask": "13:30",
+    "placeofTask": "GĐ4",
+    "noteOfTask": "Note",
+    "layoutX": 241.0,
+    "layoutY": 411.5
+  },
+  {
+    "titleTask": "Mạng máy tính",
+    "timeOfTask": "16:20",
     "placeofTask": "GĐ3",
     "noteOfTask": "Note",
-    "layoutX": 238.0,
-    "layoutY": 403.0
+    "layoutX": 432.0,
+    "layoutY": 517.0
+  },
+  {
+    "titleTask": "Công nghệ phần mềm",
+    "timeOfTask": "9:50",
+    "placeofTask": "GĐ3",
+    "noteOfTask": "Note",
+    "layoutX": 617.5,
+    "layoutY": 289.0
+  },
+  {
+    "titleTask": "TTS",
+    "timeOfTask": "16:20",
+    "placeofTask": "GĐ3",
+    "noteOfTask": "Note",
+    "layoutX": 619.5,
+    "layoutY": 520.0
+  },
+  {
+    "titleTask": "CTF",
+    "timeOfTask": "10:00",
+    "placeofTask": "Home",
+    "noteOfTask": "Note",
+    "layoutX": 1187.5,
+    "layoutY": 276.5
   }
 ]
