@@ -29,6 +29,7 @@ public class TaskEditor{
         this.task = task;
     }
     public void expandCardToEditor() {
+        task.isEditing = true;
 
         task.getChildren().clear();
 
@@ -61,7 +62,7 @@ public class TaskEditor{
         task.setSpacing(task.EDIT_SPACING);
 
         // Animation expand
-        ScaleTransition expand = new ScaleTransition(Duration.millis(300), task);
+        ScaleTransition expand = new ScaleTransition(Duration.millis(500), task);
         expand.setFromX(1.0);
         expand.setFromY(1.0);
         expand.setToX(1.1);
@@ -76,6 +77,8 @@ public class TaskEditor{
 
     private void setupEscapeHandlers(TextField titleField, TextField timeField,
                                      TextField placeField, TextArea noteArea) {
+
+
         // Task level
         task.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ESCAPE) {
@@ -121,6 +124,7 @@ public class TaskEditor{
         fade.play();
 
         collapse.setOnFinished(ev -> {
+            task.isEditing = false;
             task.getChildren().clear();
 
             task.titleLabel.setText("📅 " + task.titleTask);

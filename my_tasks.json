@@ -4,47 +4,53 @@
     "timeOfTask": "9:50",
     "placeofTask": "GĐ3",
     "noteOfTask": "Note",
-    "layoutX": 50.0,
-    "layoutY": 166.5
+    "dayOfWeek": "Mon",
+    "layoutX": 45.0,
+    "layoutY": 172.0
   },
   {
     "titleTask": "Mạng máy tính",
     "timeOfTask": "13:30",
     "placeofTask": "GĐ4",
     "noteOfTask": "Note",
-    "layoutX": 241.0,
-    "layoutY": 411.5
+    "dayOfWeek": "Tue",
+    "layoutX": 235.0,
+    "layoutY": 352.0
   },
   {
     "titleTask": "Mạng máy tính",
     "timeOfTask": "16:20",
     "placeofTask": "GĐ3",
     "noteOfTask": "Note",
-    "layoutX": 432.0,
-    "layoutY": 517.0
+    "dayOfWeek": "Wed",
+    "layoutX": 425.0,
+    "layoutY": 460.0
   },
   {
     "titleTask": "Công nghệ phần mềm",
     "timeOfTask": "9:50",
     "placeofTask": "GĐ3",
     "noteOfTask": "Note",
-    "layoutX": 617.5,
-    "layoutY": 289.0
+    "dayOfWeek": "Thu",
+    "layoutX": 615.0,
+    "layoutY": 230.0
   },
   {
     "titleTask": "TTS",
     "timeOfTask": "16:20",
     "placeofTask": "GĐ3",
     "noteOfTask": "Note",
-    "layoutX": 619.5,
-    "layoutY": 520.0
+    "dayOfWeek": "Thu",
+    "layoutX": 615.0,
+    "layoutY": 460.0
   },
   {
     "titleTask": "CTF",
     "timeOfTask": "10:00",
     "placeofTask": "Home",
     "noteOfTask": "Note",
-    "layoutX": 1187.5,
-    "layoutY": 276.5
+    "dayOfWeek": "Sun",
+    "layoutX": 1185.0,
+    "layoutY": 258.0
   }
 ]

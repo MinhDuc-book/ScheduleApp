@@ -11,14 +11,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DataManager {
-    // Tên file sẽ được lưu ngay trong thư mục chạy project
     private static final String FILE_PATH = "my_tasks.json";
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-    // 1. HÀM LƯU DỮ LIỆU
     public static void saveTasks(List<TaskModel> taskList) {
         try (FileWriter writer = new FileWriter(FILE_PATH)) {
-            // Gson tự động biến cả cái List thành chuỗi JSON và ghi ra file
+            // Gson tự động biến List thành chuỗi JSON và ghi ra file
             gson.toJson(taskList, writer);
             System.out.println("Đã lưu dữ liệu thành công!");
         } catch (IOException e) {

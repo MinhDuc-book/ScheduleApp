@@ -1,6 +1,8 @@
 package schedule.assist.demo.service;
 
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import org.controlsfx.control.ListSelectionView;
 import schedule.assist.demo.ui.Task;
 import schedule.assist.demo.model.TaskModel;
@@ -32,6 +34,29 @@ public class TaskServiceImpl implements TaskService {
         return task;
     }
 
+    private void positionTaskInColumn(Task task, String dayOfWeek, double layoutY) {
+        String[] dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+
+        for (var node : root.getChildren()) {
+            if (node instanceof HBox weekRow) {
+                int index = 0;
+                for (var col : weekRow.getChildren()) {
+                    if (col instanceof VBox column) {
+                        if (dayNames[index].equals(dayOfWeek)) {
+                            // Tính X để task nằm giữa cột
+                            double colX = column.localToScene(0, 0).getX();
+                            double snapX = colX + (column.getWidth() - task.getPrefWidth()) / 2;
+                            task.setLayoutX(snapX);
+                            task.setLayoutY(layoutY);
+                            return;
+                        }
+                        index++;
+                    }
+                }
+            }
+        }
+    }
+
     // load Task card from file with same attribute
     @Override
     public void loadTask(TaskModel model) {
@@ -40,11 +65,21 @@ public class TaskServiceImpl implements TaskService {
         task.setTimeOfTask(model.getTimeOfTask());
         task.setPlaceofTask(model.getPlaceofTask());
         task.setNoteOfTask(model.getNoteOfTask());
-        task.setLayoutX(model.getLayoutX());
-        task.setLayoutY(model.getLayoutY());
+        task.setDayOfWeek(model.getDayOfWeek());
         task.onDelete = () -> {deleteTask(task);};    // gắn callback xóa
         root.getChildren().add(task);
         taskList.add(task);
+
+        if (model.getDayOfWeek() != null && !model.getDayOfWeek().isEmpty()) {
+            // Dùng Platform.runLater vì layout chưa tính xong khi load
+            javafx.application.Platform.runLater(() -> {
+                positionTaskInColumn(task, model.getDayOfWeek(), model.getLayoutY());
+            });
+        } else {
+            // Không có cột thì dùng tọa độ cũ
+            task.setLayoutX(model.getLayoutX());
+            task.setLayoutY(model.getLayoutY());
+        }
     }
 
     // delete Task -> update delete to TaskModel(which use for Model in MVC)

@@ -13,7 +13,7 @@ import javafx.scene.effect.DropShadow;
 import javafx.stage.Stage;
 import schedule.assist.demo.service.TaskServiceImpl;
 import schedule.assist.demo.ui.AddTaskButton;
-import schedule.assist.demo.Week;
+import schedule.assist.demo.ui.Week;
 import schedule.assist.demo.model.TaskModel;
 import schedule.assist.demo.repository.JsonTaskRepository;
 import schedule.assist.demo.repository.TaskRepository;
@@ -36,7 +36,7 @@ public class HelloApplication extends Application {
     @Override
     public void start(Stage stage) {
         root = new AnchorPane();
-        root.setStyle("-fx-background-color: #fdfd96;");
+        root.setStyle("-fx-background-color: #0A192F;");
 
         TaskService taskService = new TaskServiceImpl(root, taskRepository, taskList);
 

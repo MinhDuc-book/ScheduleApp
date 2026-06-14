@@ -1,0 +1,16 @@
+schedule\assist\demo\ui\HelloApplication.class
+schedule\assist\demo\repository\TaskRepository.class
+schedule\assist\demo\ui\TaskEditor.class
+schedule\assist\demo\service\TaskService.class
+schedule\assist\demo\ui\Launcher.class
+schedule\assist\demo\repository\JsonTaskRepository.class
+schedule\assist\demo\util\DataManager.class
+schedule\assist\demo\service\TaskServiceImpl.class
+schedule\assist\demo\model\TaskModel.class
+schedule\assist\demo\ui\Week.class
+schedule\assist\demo\ui\HelloController.class
+schedule\assist\demo\util\DataManager$1.class
+module-info.class
+schedule\assist\demo\ui\DeleteTaskButton.class
+schedule\assist\demo\ui\Task.class
+schedule\assist\demo\ui\AddTaskButton.class

@@ -1,56 +1,54 @@
 package schedule.assist.demo.ui;
 
-import javafx.animation.FadeTransition;
-import javafx.animation.ScaleTransition;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.input.KeyCode;
+import javafx.scene.effect.InnerShadow;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.util.Duration;
-import schedule.assist.demo.ui.DeleteTaskButton;
 import schedule.assist.demo.model.TaskModel;
 
 public class Task extends VBox {
 
     private double dragOffsetX, dragOffsetY;
 
-    protected String titleTask = "Event";
-    protected String timeOfTask = "10:00";
-    protected String noteOfTask = "Note";
+    protected String titleTask   = "Event";
+    protected String timeOfTask  = "10:00";
     protected String placeofTask = "GĐ3";
-    protected String colorTaskSchool = "-fx-background-color: #00E8FF;";
-    protected String colorTaskHome = "-fx-background-color: #FFEA00;";
+    protected String noteOfTask  = "Note";
+    protected String dayOfWeek = "";
 
-    protected static final double NORMAL_SPACING = 4;
-    protected static final double EDIT_SPACING = 12;
+    protected String colorTaskSchool = "-fx-background-color: #2D3F6AFF;";
+    protected String colorTaskHome   = "-fx-background-color: #1A1A2EFF;";
+
+    protected String borderSchool = "#00E8FF"; // cyan
+    protected String borderHome   = "#B48EFF"; // tím nhạt
+
+    protected static final double NORMAL_SPACING = 6;
+    protected static final double EDIT_SPACING   = 12;
 
     public Label titleLabel;
     public Label timeLabel;
     public Label placeLabel;
 
     public Runnable onDelete = () -> {};
+    public boolean isEditing = false;
 
     public String BASE_STYLE =
-            "-fx-background-radius: 12;" +
-            "-fx-padding: 16;" +
-            "-fx-border-color: #e0e0e0;" +
-            "-fx-border-radius: 12;" +
-            "-fx-border-width: 1;" +
-            "-fx-cursor: hand;";
+            "-fx-background-radius: 14;" +
+                    "-fx-padding: 12 14;" +
+                    "-fx-border-radius: 14;" +
+                    "-fx-border-width: 1.5;" +
+                    "-fx-cursor: hand;";
 
-
-    public String SCALE_STYLE = "-fx-background-color: white;" +
-            "-fx-background-radius: 16;" +
-            "-fx-padding: 20;" +
-            "-fx-border-color: #4A90E2;" +
-            "-fx-border-radius: 16;" +
-            "-fx-border-width: 2;" +
-            "-fx-cursor: default;";
-
+    public String SCALE_STYLE =
+            "-fx-background-color: #1C2B3A;" +
+                    "-fx-background-radius: 16;" +
+                    "-fx-padding: 20;" +
+                    "-fx-border-color: #4A90E2;" +
+                    "-fx-border-radius: 16;" +
+                    "-fx-border-width: 2;" +
+                    "-fx-cursor: default;";
 
     public Task() {
         setupUITask();
@@ -58,7 +56,7 @@ public class Task extends VBox {
 
     public void setTitleTask(String t) {
         this.titleTask = t;
-        titleLabel.setText("📅 " + t);
+        titleLabel.setText(t);
     }
 
     public void setTimeOfTask(String t) {
@@ -70,16 +68,18 @@ public class Task extends VBox {
         this.placeofTask = n;
         placeLabel.setText("📍 " + n);
         this.setStyle(setColorFromPlace());
+        this.applyGlow();
     }
 
-    public void setNoteOfTask(String n) {
-        this.noteOfTask = n;
-    }
+    public void setNoteOfTask(String n) { this.noteOfTask = n; }
 
-    public String getTitleTask() { return this.titleTask; }
-    public String getTimeOfTask() { return this.timeOfTask; }
-    public String getNoteOfTask() { return this.noteOfTask; }
-    public String getPlaceofTask() { return this.placeofTask; }
+    public void setDayOfWeek(String n) {this.dayOfWeek = n;}
+
+    public String getTitleTask()   { return titleTask; }
+    public String getTimeOfTask()  { return timeOfTask; }
+    public String getNoteOfTask()  { return noteOfTask; }
+    public String getPlaceofTask() { return placeofTask; }
+    public String getDayOfWeek() {return dayOfWeek;}
 
     private void bringToTop() {
         AnchorPane parent = (AnchorPane) this.getParent();
@@ -89,60 +89,148 @@ public class Task extends VBox {
         }
     }
 
+
     public String setColorFromPlace() {
-        String color = "";
         if (placeofTask.contains("Home")) {
-            color = colorTaskHome;
-            return color + BASE_STYLE;
+            // Home: nền tím đậm, viền tím nhạt
+            return colorTaskHome +
+                    "-fx-border-color: " + borderHome + ";" +
+                    BASE_STYLE;
         }
-        return colorTaskSchool + BASE_STYLE;
+        // School/default: nền xanh đậm, viền cyan
+        return colorTaskSchool +
+                "-fx-border-color: " + borderSchool + ";" +
+                BASE_STYLE;
     }
 
-    public Task setupUITask() {
-        titleLabel = new Label("📅 " + titleTask);
-        timeLabel = new Label("🕐 " + timeOfTask);
-        placeLabel = new Label("📍 " + placeofTask);
+    private void applyGlow() {
+        DropShadow glow = new DropShadow();
+        glow.setOffsetX(0);
+        glow.setOffsetY(0);
+        glow.setRadius(6);
+        glow.setSpread(0.6);
 
-        this.setPrefSize(160, 85);
-        this.setStyle(setColorFromPlace());
+        if (placeofTask.contains("Home")) {
+            glow.setColor(Color.web("#B48EFF", 0.8));
+        } else {
+            glow.setColor(Color.web("#00E8FF", 0.8));
+        }
+
+        this.setEffect(glow);
+    }
+
+    private void snapToColumn() {
+        AnchorPane parent = (AnchorPane) this.getParent();
+        if (parent == null) return;
+
+        // Tìm HBox chứa các cột ngày (WeekRow là child đầu tiên của root)
+        HBox weekRow = null;
+        for (var node : parent.getChildren()) {
+            if (node instanceof HBox) {
+                weekRow = (HBox) node;
+                break;
+            }
+        }
+        if (weekRow == null) return;
+
+        // Lấy vị trí X trung tâm của task
+        double taskCenterX = this.getLayoutX() + this.getPrefWidth() / 2;
+
+        // Tìm cột gần nhất
+        VBox closestColumn = null;
+        double minDistance = Double.MAX_VALUE;
+        String closestDay = "";
+
+        String[] dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+        int index = 0;
+
+        for (var node : weekRow.getChildren()) {
+            if (node instanceof VBox col) {
+                // Lấy vị trí X của cột trong scene
+                double colX = col.localToScene(0, 0).getX();
+                double colCenterX = colX + col.getWidth() / 2;
+                double distance = Math.abs(taskCenterX - colCenterX);
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestColumn = col;
+                    closestDay = dayNames[index];
+                }
+                index++;
+            }
+        }
+
+        //Chỉ snap nếu task đủ gần cột (trong vòng nửa chiều rộng cột)
+        if (closestColumn != null && minDistance < closestColumn.getWidth()) {
+            // Snap vị trí X vào trung tâm cột
+            double colX = closestColumn.localToScene(0, 0).getX();
+            double snapX = colX + (closestColumn.getWidth() - this.getPrefWidth()) / 2;
+            this.setLayoutX(snapX);
+
+            // Lưu ngày
+            this.dayOfWeek = closestDay;
+        }
+    }
+
+    // Setup toàn bộ UI của card
+    public Task setupUITask() {
+
+        // Label tiêu đề — chữ trắn
+        titleLabel = new Label(titleTask);
+        titleLabel.setStyle(
+                "-fx-font-size: 13;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-text-fill: white;"
+        );
+
+        timeLabel = new Label("🕐 " + timeOfTask);
+        timeLabel.setStyle(
+                "-fx-font-size: 12;" +
+                        "-fx-text-fill: #A8D8EA;"
+        );
+
+        placeLabel = new Label("📍 " + placeofTask);
+        placeLabel.setStyle(
+                "-fx-font-size: 11;" +
+                        "-fx-text-fill: #A8D8EA;"
+        );
+
+        this.setPrefSize(170, 80);
         this.setSpacing(NORMAL_SPACING);
 
-        DropShadow shadow = new DropShadow();
-        shadow.setColor(Color.rgb(0, 0, 0, 0.15));
-        shadow.setOffsetY(4);
-        shadow.setRadius(12);
-        this.setEffect(shadow);
+        // Áp màu nền + viền theo place
+        this.setStyle(setColorFromPlace());
+        applyGlow();
 
-        titleLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold;");
-        timeLabel.setStyle("-fx-font-size: 13; -fx-text-fill: #555;");
-        placeLabel.setStyle("-fx-font-size: 13; -fx-text-fill: #555;");
 
         this.getChildren().setAll(titleLabel, timeLabel, placeLabel);
 
-        // drag
         this.setOnMousePressed(e -> {
             if (e.getButton() != MouseButton.PRIMARY) return;
-
+            if (isEditing) return;
             dragOffsetX = e.getSceneX() - this.getLayoutX();
             dragOffsetY = e.getSceneY() - this.getLayoutY();
-            this.setStyle(setColorFromPlace().replace("-fx-cursor: hand;", "-fx-cursor: closed-hand;"));
-
-            // Bring to front
+            // Đổi cursor khi đang kéo
+            this.setStyle(
+                    setColorFromPlace().replace("-fx-cursor: hand;", "-fx-cursor: closed-hand;")
+            );
             bringToTop();
-
         });
 
         this.setOnMouseDragged(e -> {
             if (e.getButton() != MouseButton.PRIMARY) return;
+            if (isEditing) return;
             this.setLayoutX(e.getSceneX() - dragOffsetX);
             this.setLayoutY(e.getSceneY() - dragOffsetY);
         });
 
         this.setOnMouseReleased(e -> {
+            if (isEditing) return;
             this.setStyle(setColorFromPlace());
+            applyGlow();
+            snapToColumn();
         });
 
-        // edit
         this.setOnMouseClicked(e -> {
             if (e.getButton() == MouseButton.SECONDARY) {
                 bringToTop();
@@ -154,7 +242,7 @@ public class Task extends VBox {
     }
 
     public TaskModel toModel() {
-        return new  TaskModel(titleTask, timeOfTask, placeofTask, noteOfTask,
+        return new TaskModel(titleTask, timeOfTask, placeofTask, noteOfTask, dayOfWeek,
                 this.getLayoutX(), this.getLayoutY());
     }
 }
