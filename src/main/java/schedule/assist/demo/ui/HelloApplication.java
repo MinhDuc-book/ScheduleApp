@@ -2,14 +2,8 @@ package schedule.assist.demo.ui;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.input.MouseButton;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.scene.control.Label;
-import javafx.scene.paint.Color;
-import javafx.scene.effect.DropShadow;
 import javafx.stage.Stage;
 import schedule.assist.demo.service.TaskServiceImpl;
 import schedule.assist.demo.ui.AddTaskButton;
@@ -63,7 +57,14 @@ public class HelloApplication extends Application {
 
         // Khi đóng app — save toàn bộ list
         stage.setOnCloseRequest(e -> {
-            taskService.saveAll();
+            try {
+                if (!(DataManager.recoveredFromCorrupt && taskList.isEmpty())) {
+                    taskService.saveAll();
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            javafx.application.Platform.exit();
         });
     }
 }

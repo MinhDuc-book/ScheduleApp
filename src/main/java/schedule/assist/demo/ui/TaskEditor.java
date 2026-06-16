@@ -1,6 +1,5 @@
 package schedule.assist.demo.ui;
 
-import javafx.animation.FadeTransition;
 import javafx.animation.ScaleTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -10,7 +9,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
-import schedule.assist.demo.ui.DeleteTaskButton;
+
 
 public class TaskEditor{
     private Task task;
@@ -106,7 +105,6 @@ public class TaskEditor{
         if (!titleField.getText().trim().isEmpty()) task.titleTask = titleField.getText().trim();
         if (!timeField.getText().trim().isEmpty()) task.timeOfTask = timeField.getText().trim();
         if (!placeField.getText().trim().isEmpty()) task.placeofTask = placeField.getText().trim();
-        task.setColorFromPlace();
         task.noteOfTask = noteArea.getText().trim();
 
         // Animation collapse
@@ -116,12 +114,7 @@ public class TaskEditor{
         collapse.setToX(1.0);
         collapse.setToY(1.0);
 
-        FadeTransition fade = new FadeTransition(Duration.millis(150), task);
-        fade.setFromValue(1.0);
-        fade.setToValue(1.0);
-
         collapse.play();
-        fade.play();
 
         collapse.setOnFinished(ev -> {
             task.isEditing = false;
@@ -134,12 +127,18 @@ public class TaskEditor{
 
 
             task.getChildren().setAll(task.titleLabel, task.timeLabel, task.placeLabel);
-            task.setStyle(task.setColorFromPlace());
+            task.setStyle(task.getColorStyleFromPlace());
             task.setSpacing(task.NORMAL_SPACING);
 
             // Reset scale
             task.setScaleX(1.0);
             task.setScaleY(1.0);
+
+            try {
+                task.onChange.run();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
 
     }

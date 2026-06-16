@@ -55,6 +55,7 @@ public class Week {
         label.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: white;");
 
         card.getChildren().add(label);
+        card.setUserData(dayName);
         return card;
     }
 }

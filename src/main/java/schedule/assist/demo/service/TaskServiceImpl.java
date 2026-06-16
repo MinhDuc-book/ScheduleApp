@@ -3,12 +3,10 @@ package schedule.assist.demo.service;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import org.controlsfx.control.ListSelectionView;
 import schedule.assist.demo.ui.Task;
 import schedule.assist.demo.model.TaskModel;
 import schedule.assist.demo.repository.TaskRepository;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +26,7 @@ public class TaskServiceImpl implements TaskService {
     public Task createTask() {
         Task task = new Task();
         task.onDelete = () -> {deleteTask(task);};
+        task.onChange = this::saveAll;
         root.getChildren().add(task);
         taskList.add(task);
 
@@ -35,14 +34,14 @@ public class TaskServiceImpl implements TaskService {
     }
 
     private void positionTaskInColumn(Task task, String dayOfWeek, double layoutY) {
-        String[] dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
-
         for (var node : root.getChildren()) {
             if (node instanceof HBox weekRow) {
-                int index = 0;
                 for (var col : weekRow.getChildren()) {
                     if (col instanceof VBox column) {
-                        if (dayNames[index].equals(dayOfWeek)) {
+                        Object userData = column.getUserData();
+                        if (userData == null) continue;
+
+                        if (userData.toString().equals(dayOfWeek)) {
                             // Tính X để task nằm giữa cột
                             double colX = column.localToScene(0, 0).getX();
                             double snapX = colX + (column.getWidth() - task.getPrefWidth()) / 2;
@@ -50,7 +49,6 @@ public class TaskServiceImpl implements TaskService {
                             task.setLayoutY(layoutY);
                             return;
                         }
-                        index++;
                     }
                 }
             }
@@ -67,6 +65,7 @@ public class TaskServiceImpl implements TaskService {
         task.setNoteOfTask(model.getNoteOfTask());
         task.setDayOfWeek(model.getDayOfWeek());
         task.onDelete = () -> {deleteTask(task);};    // gắn callback xóa
+        task.onChange = this::saveAll;
         root.getChildren().add(task);
         taskList.add(task);
 

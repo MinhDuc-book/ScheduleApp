@@ -1,18 +1,8 @@
 package schedule.assist.demo.ui;
 
 import javafx.scene.control.Button;
-import javafx.scene.effect.DropShadow;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-
-import java.util.List;
-
-import static schedule.assist.demo.ui.HelloApplication.SCREEN_H;
 
 public class DeleteTaskButton extends Button {
-
-    private static final double BUTTON_SIZE = 20;
 
     public DeleteTaskButton() {
         super("🗑 Delete");

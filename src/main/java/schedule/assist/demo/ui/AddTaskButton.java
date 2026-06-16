@@ -75,8 +75,23 @@ public class AddTaskButton extends Button {
         // ── Tạo task mới ở giữa màn hình ─────────────────────────
         this.setOnAction(e -> {
             Task task = taskService.createTask();
-            task.setLayoutX(SCREEN_W / 2 - 100);
-            task.setLayoutY(SCREEN_H / 2);
+            double width = SCREEN_W;
+            double height = SCREEN_H;
+            if (this.getParent() instanceof javafx.scene.layout.Region root) {
+                if (root.getWidth() > 0) {
+                    width = root.getWidth();
+                } else if (root.getPrefWidth() > 0) {
+                    width = root.getPrefWidth();
+                }
+                if (root.getHeight() > 0) {
+                    height = root.getHeight();
+                } else if (root.getPrefHeight() > 0) {
+                    height = root.getPrefHeight();
+                }
+            }
+            task.setLayoutX(width / 2.0 - 100);
+            task.setLayoutY(height / 2.0);
+            task.onChange.run();
         });
     }
 }

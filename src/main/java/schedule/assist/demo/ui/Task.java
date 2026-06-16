@@ -2,7 +2,6 @@ package schedule.assist.demo.ui;
 
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.effect.InnerShadow;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -32,6 +31,7 @@ public class Task extends VBox {
     public Label placeLabel;
 
     public Runnable onDelete = () -> {};
+    public Runnable onChange = () -> {};
     public boolean isEditing = false;
 
     public String BASE_STYLE =
@@ -67,7 +67,7 @@ public class Task extends VBox {
     public void setPlaceofTask(String n) {
         this.placeofTask = n;
         placeLabel.setText("📍 " + n);
-        this.setStyle(setColorFromPlace());
+        this.setStyle(getColorStyleFromPlace());
         this.applyGlow();
     }
 
@@ -90,7 +90,7 @@ public class Task extends VBox {
     }
 
 
-    public String setColorFromPlace() {
+    public String getColorStyleFromPlace() {
         if (placeofTask.contains("Home")) {
             // Home: nền tím đậm, viền tím nhạt
             return colorTaskHome +
@@ -141,11 +141,11 @@ public class Task extends VBox {
         double minDistance = Double.MAX_VALUE;
         String closestDay = "";
 
-        String[] dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
-        int index = 0;
-
         for (var node : weekRow.getChildren()) {
             if (node instanceof VBox col) {
+                Object userData = col.getUserData();
+                if (userData == null) continue;
+
                 // Lấy vị trí X của cột trong scene
                 double colX = col.localToScene(0, 0).getX();
                 double colCenterX = colX + col.getWidth() / 2;
@@ -154,9 +154,8 @@ public class Task extends VBox {
                 if (distance < minDistance) {
                     minDistance = distance;
                     closestColumn = col;
-                    closestDay = dayNames[index];
+                    closestDay = userData.toString();
                 }
-                index++;
             }
         }
 
@@ -169,6 +168,8 @@ public class Task extends VBox {
 
             // Lưu ngày
             this.dayOfWeek = closestDay;
+        } else {
+            this.dayOfWeek = "";
         }
     }
 
@@ -199,7 +200,7 @@ public class Task extends VBox {
         this.setSpacing(NORMAL_SPACING);
 
         // Áp màu nền + viền theo place
-        this.setStyle(setColorFromPlace());
+        this.setStyle(getColorStyleFromPlace());
         applyGlow();
 
 
@@ -212,7 +213,7 @@ public class Task extends VBox {
             dragOffsetY = e.getSceneY() - this.getLayoutY();
             // Đổi cursor khi đang kéo
             this.setStyle(
-                    setColorFromPlace().replace("-fx-cursor: hand;", "-fx-cursor: closed-hand;")
+                    getColorStyleFromPlace().replace("-fx-cursor: hand;", "-fx-cursor: closed-hand;")
             );
             bringToTop();
         });
@@ -226,12 +227,18 @@ public class Task extends VBox {
 
         this.setOnMouseReleased(e -> {
             if (isEditing) return;
-            this.setStyle(setColorFromPlace());
+            this.setStyle(getColorStyleFromPlace());
             applyGlow();
             snapToColumn();
+            try {
+                onChange.run();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         });
 
         this.setOnMouseClicked(e -> {
+            if (isEditing) return;
             if (e.getButton() == MouseButton.SECONDARY) {
                 bringToTop();
                 new TaskEditor(this).expandCardToEditor();
