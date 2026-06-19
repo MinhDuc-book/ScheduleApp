@@ -11,7 +11,7 @@ import javafx.scene.paint.Color;
 
 public class Week {
 
-    private final String[] dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+    private final String[] dayNames = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 
     public HBox createWeekView() {
         HBox weekRow = new HBox(10);
@@ -33,14 +33,11 @@ public class Week {
         card.setPrefSize(180, 600);
         card.setMaxWidth(Double.MAX_VALUE);
         card.setAlignment(Pos.TOP_CENTER);
-        card.setStyle(
-                "-fx-background-color: #2A3D4AFF;" +
-                        "-fx-background-radius: 10;" +
-                        "-fx-border-color: #00E8FF;" +   // viền cyan giống task
-                        "-fx-border-radius: 10;" +
-                        "-fx-border-width: 1;" +
-                        "-fx-padding: 10;"
-        );
+        card.setStyle("-fx-background-color: #2A3D4AFF;" + "-fx-background-radius: 10;" + "-fx-border-color: #00E8FF;" + // viền
+                                                                                                                         // cyan
+                                                                                                                         // giống
+                                                                                                                         // task
+                "-fx-border-radius: 10;" + "-fx-border-width: 1;" + "-fx-padding: 10;");
 
         // ── Glow effect cho viền ──────────────────────────────
         DropShadow glow = new DropShadow();

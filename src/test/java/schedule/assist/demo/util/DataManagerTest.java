@@ -26,11 +26,18 @@ class DataManagerTest {
 
     private Path testFilePath;
 
+    // Helper: set the private recoveredFromCorrupt field via reflection.
+    private static void setRecoveredFromCorrupt(boolean value) throws Exception {
+        java.lang.reflect.Field f = DataManager.class.getDeclaredField("recoveredFromCorrupt");
+        f.setAccessible(true);
+        f.set(null, value);
+    }
+
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         testFilePath = tempDir.resolve("my_tasks.json");
         DataManager.setFilePath(testFilePath.toString());
-        DataManager.recoveredFromCorrupt = false;
+        setRecoveredFromCorrupt(false);
     }
 
     @AfterEach
@@ -73,13 +80,13 @@ class DataManagerTest {
         Files.writeString(testFilePath, corruptJson);
 
         List<TaskModel> result = DataManager.loadTasks();
-        
+
         assertNotNull(result);
         assertTrue(result.isEmpty());
-        
+
         // Original file should be renamed, so it shouldn't exist anymore
         assertFalse(Files.exists(testFilePath));
-        
+
         // Find backup file
         File[] backups = tempDir.toFile().listFiles((dir, name) -> name.startsWith("my_tasks.json.bak."));
         assertNotNull(backups);
@@ -93,17 +100,17 @@ class DataManagerTest {
 
         // Force a backup by loading tasks
         DataManager.loadTasks();
-        
+
         // Find the first backup
         File[] firstBackups = tempDir.toFile().listFiles((dir, name) -> name.startsWith("my_tasks.json.bak."));
         assertEquals(1, firstBackups.length);
-        
+
         // Recreate the corrupt file with different content
         Files.writeString(testFilePath, "another broken json");
-        
+
         // Load tasks again, this should create a second backup
         DataManager.loadTasks();
-        
+
         File[] allBackups = tempDir.toFile().listFiles((dir, name) -> name.startsWith("my_tasks.json.bak."));
         assertEquals(2, allBackups.length);
     }
@@ -125,13 +132,13 @@ class DataManagerTest {
     }
 
     @Test
-    void saveTasks_whenRecoveredFromCorruptAndListIsEmpty_doesNotWriteToFile() throws IOException {
+    void saveTasks_whenRecoveredFromCorruptAndListIsEmpty_doesNotWriteToFile() throws Exception {
         String corruptJson = "[{\"titleTask\":\"Test\", broken json";
         Files.writeString(testFilePath, corruptJson);
 
         List<TaskModel> loaded = DataManager.loadTasks();
         assertTrue(loaded.isEmpty());
-        assertTrue(DataManager.recoveredFromCorrupt);
+        assertTrue(DataManager.isRecoveredFromCorrupt());
         assertFalse(Files.exists(testFilePath));
 
         // Now save an empty list
@@ -142,13 +149,13 @@ class DataManagerTest {
     }
 
     @Test
-    void saveTasks_whenRecoveredFromCorruptAndListIsNull_doesNotWriteToFile() throws IOException {
+    void saveTasks_whenRecoveredFromCorruptAndListIsNull_doesNotWriteToFile() throws Exception {
         String corruptJson = "[{\"titleTask\":\"Test\", broken json";
         Files.writeString(testFilePath, corruptJson);
 
         List<TaskModel> loaded = DataManager.loadTasks();
         assertTrue(loaded.isEmpty());
-        assertTrue(DataManager.recoveredFromCorrupt);
+        assertTrue(DataManager.isRecoveredFromCorrupt());
 
         // Now save null
         DataManager.saveTasks(null);
@@ -169,25 +176,26 @@ class DataManagerTest {
     }
 
     @Test
-    void saveTasks_nonEmptySave_resetsRecoveredFromCorruptToFalse() {
+    void saveTasks_nonEmptySave_resetsRecoveredFromCorruptToFalse() throws Exception {
         // Manually set recovery flag to true
-        DataManager.recoveredFromCorrupt = true;
+        setRecoveredFromCorrupt(true);
 
         TaskModel task = new TaskModel("T1", "10:00", "Home", "Note 1", "Mon", 0.0, 0.0);
         DataManager.saveTasks(Arrays.asList(task));
 
         // Verify that the flag is reset after a non-empty save
-        assertFalse(DataManager.recoveredFromCorrupt);
+        assertFalse(DataManager.isRecoveredFromCorrupt());
     }
 
     @Test
-    void saveTasks_whenRecoveredFromCorruptAndListIsNotEmpty_resetsRecoveredFromCorruptFlagAndSavesTasks() throws IOException {
+    void saveTasks_whenRecoveredFromCorruptAndListIsNotEmpty_resetsRecoveredFromCorruptFlagAndSavesTasks()
+            throws Exception {
         // 1. Simulate corruption recovery by loading corrupt JSON
         String corruptJson = "[{\"titleTask\":\"Test\", broken json";
         Files.writeString(testFilePath, corruptJson);
         List<TaskModel> loaded = DataManager.loadTasks();
         assertTrue(loaded.isEmpty());
-        assertTrue(DataManager.recoveredFromCorrupt);
+        assertTrue(DataManager.isRecoveredFromCorrupt());
         assertFalse(Files.exists(testFilePath)); // Backup was created, original file renamed/deleted
 
         // 2. Save a non-empty task list (e.g. adding a task)
@@ -196,14 +204,33 @@ class DataManagerTest {
 
         // 3. Verify task is successfully written and recoveredFromCorrupt is reset to false
         assertTrue(Files.exists(testFilePath));
-        assertFalse(DataManager.recoveredFromCorrupt);
+        assertFalse(DataManager.isRecoveredFromCorrupt());
 
         // 4. Verify we can now delete the task and successfully save the empty list (deleting it from disk)
         DataManager.saveTasks(new ArrayList<>());
         assertTrue(Files.exists(testFilePath));
-        
+
         List<TaskModel> reloaded = DataManager.loadTasks();
         assertTrue(reloaded.isEmpty());
-        assertFalse(DataManager.recoveredFromCorrupt);
+        assertFalse(DataManager.isRecoveredFromCorrupt());
+    }
+
+    /** Full six-field round-trip — guards against silent field renames breaking JSON deserialization. */
+    @Test
+    void saveTasks_thenLoadTasks_preservesAllFields() {
+        TaskModel original = new TaskModel("Meeting", "14:30", "Home", "Bring laptop", "Wed", 123.5, 456.75);
+        DataManager.saveTasks(Arrays.asList(original));
+
+        List<TaskModel> loaded = DataManager.loadTasks();
+        assertEquals(1, loaded.size());
+
+        TaskModel m = loaded.get(0);
+        assertEquals("Meeting", m.getTitleTask());
+        assertEquals("14:30", m.getTimeOfTask());
+        assertEquals("Home", m.getPlaceofTask());
+        assertEquals("Bring laptop", m.getNoteOfTask());
+        assertEquals("Wed", m.getDayOfWeek());
+        assertEquals(123.5, m.getLayoutX(), 0.001);
+        assertEquals(456.75, m.getLayoutY(), 0.001);
     }
 }

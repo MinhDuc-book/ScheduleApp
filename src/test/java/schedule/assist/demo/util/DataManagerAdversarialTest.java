@@ -10,7 +10,6 @@ import schedule.assist.demo.model.TaskModel;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
@@ -34,6 +33,13 @@ class DataManagerAdversarialTest {
     private Path testFilePath;
     private String originalFilePath;
 
+    // Helper: set the private recoveredFromCorrupt field via reflection.
+    private static void setRecoveredFromCorrupt(boolean value) throws Exception {
+        java.lang.reflect.Field f = DataManager.class.getDeclaredField("recoveredFromCorrupt");
+        f.setAccessible(true);
+        f.set(null, value);
+    }
+
     @BeforeEach
     void setUp() throws Exception {
         // Retrieve original file path to restore it later
@@ -43,13 +49,13 @@ class DataManagerAdversarialTest {
 
         testFilePath = tempDir.resolve("my_tasks.json");
         DataManager.setFilePath(testFilePath.toString());
-        DataManager.recoveredFromCorrupt = false;
+        setRecoveredFromCorrupt(false);
     }
 
     @AfterEach
-    void tearDown() {
+    void tearDown() throws Exception {
         DataManager.setFilePath(originalFilePath);
-        DataManager.recoveredFromCorrupt = false;
+        setRecoveredFromCorrupt(false);
     }
 
     @Test
@@ -92,8 +98,10 @@ class DataManagerAdversarialTest {
             File expectedFile = new File(tempDir.toFile(), ".schedule-assistant/my_tasks.json");
             assertEquals(expectedFile.getAbsolutePath(), resolved);
         } finally {
-            if (originalOs != null) System.setProperty("os.name", originalOs);
-            if (originalUserHome != null) System.setProperty("user.home", originalUserHome);
+            if (originalOs != null)
+                System.setProperty("os.name", originalOs);
+            if (originalUserHome != null)
+                System.setProperty("user.home", originalUserHome);
         }
     }
 
@@ -101,13 +109,13 @@ class DataManagerAdversarialTest {
     void testBackupFileNameCollisionsInSameSecond() throws IOException {
         // Write corrupt JSON to test file
         String corruptJson = "{invalid-json-content:[";
-        
+
         // Trigger backup 5 times in rapid succession
         for (int i = 0; i < 5; i++) {
             Files.writeString(testFilePath, corruptJson);
             List<TaskModel> result = DataManager.loadTasks();
             assertTrue(result.isEmpty());
-            assertTrue(DataManager.recoveredFromCorrupt);
+            assertTrue(DataManager.isRecoveredFromCorrupt());
         }
 
         // Check the directory to verify multiple backup files are created with counter suffix
@@ -127,19 +135,19 @@ class DataManagerAdversarialTest {
             // Load tasks should detect corrupt JSON and try to backup
             // Because file is locked, renameTo should fail, but method should handle it gracefully
             List<TaskModel> result = DataManager.loadTasks();
-            
+
             assertNotNull(result);
             assertTrue(result.isEmpty());
-            assertTrue(DataManager.recoveredFromCorrupt);
-            
+            assertTrue(DataManager.isRecoveredFromCorrupt());
+
             // File should still exist at the original location since rename failed
             assertTrue(Files.exists(testFilePath));
-            
+
             // Now attempt to save tasks with an empty list
             // Since recoveredFromCorrupt is true and list is empty, it must skip save
             // This prevents overwriting the locked/corrupt file
             DataManager.saveTasks(new ArrayList<>());
-            
+
             // Verify content is still the corrupt content and has not been cleared or overwritten
             String currentContent = Files.readString(testFilePath);
             assertEquals(corruptJson, currentContent);
@@ -147,20 +155,20 @@ class DataManagerAdversarialTest {
     }
 
     @Test
-    void testSaveTasks_WritePermissionsFailure_DoesNotResetFlag() {
+    void testSaveTasks_WritePermissionsFailure_DoesNotResetFlag() throws Exception {
         // Configure path to an invalid/non-writable directory to trigger IOException in saveTasks
         // On Windows, writing to a directory path or an invalid drive will fail.
         String invalidPath = "Z:\\nonexistent_directory_392842\\my_tasks.json";
         DataManager.setFilePath(invalidPath);
-        DataManager.recoveredFromCorrupt = true;
+        setRecoveredFromCorrupt(true);
 
         TaskModel task = new TaskModel("T1", "10:00", "Home", "Note 1", "Mon", 0.0, 0.0);
-        
+
         // Should not throw exception
         assertDoesNotThrow(() -> DataManager.saveTasks(Collections.singletonList(task)));
 
         // Since the write failed (IOException caught), the recoveredFromCorrupt flag must NOT be reset to false
-        assertTrue(DataManager.recoveredFromCorrupt, "recoveredFromCorrupt should remain true if save failed");
+        assertTrue(DataManager.isRecoveredFromCorrupt(), "recoveredFromCorrupt should remain true if save failed");
     }
 
     @Test
@@ -168,7 +176,7 @@ class DataManagerAdversarialTest {
         int threadCount = 10;
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         CountDownLatch latch = new CountDownLatch(threadCount);
-        
+
         List<TaskModel> tasks = new ArrayList<>();
         tasks.add(new TaskModel("T1", "10:00", "Home", "Note 1", "Mon", 0.0, 0.0));
 

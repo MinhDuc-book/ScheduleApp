@@ -11,7 +11,12 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import schedule.assist.demo.model.TaskModel;
+import schedule.assist.demo.ui.HelloApplication;
+import schedule.assist.demo.ui.Task;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -39,11 +44,8 @@ public class JFXTestUtils {
 
     public static void simulateRightClick(Node node) {
         Platform.runLater(() -> {
-            MouseEvent rightClick = new MouseEvent(
-                MouseEvent.MOUSE_CLICKED,
-                0, 0, 0, 0, MouseButton.SECONDARY, 1,
-                false, false, false, false, false, true, false, false, false, true, null
-            );
+            MouseEvent rightClick = new MouseEvent(MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0, MouseButton.SECONDARY, 1,
+                    false, false, false, false, false, true, false, false, false, true, null);
             Event.fireEvent(node, rightClick);
         });
         waitForFxEvents();
@@ -51,11 +53,7 @@ public class JFXTestUtils {
 
     public static void simulateKeyPress(Node target, KeyCode code) {
         Platform.runLater(() -> {
-            KeyEvent press = new KeyEvent(
-                KeyEvent.KEY_PRESSED,
-                "", "", code,
-                false, false, false, false
-            );
+            KeyEvent press = new KeyEvent(KeyEvent.KEY_PRESSED, "", "", code, false, false, false, false);
             Event.fireEvent(target, press);
         });
         waitForFxEvents();
@@ -63,75 +61,57 @@ public class JFXTestUtils {
 
     public static void simulateDragAndDrop(Node node, double startX, double startY, double endX, double endY) {
         Platform.runLater(() -> {
-            MouseEvent pressed = new MouseEvent(
-                MouseEvent.MOUSE_PRESSED,
-                startX, startY, startX, startY, MouseButton.PRIMARY, 1,
-                false, false, false, false, true, false, false, false, false, true, null
-            );
+            MouseEvent pressed = new MouseEvent(MouseEvent.MOUSE_PRESSED, startX, startY, startX, startY,
+                    MouseButton.PRIMARY, 1, false, false, false, false, true, false, false, false, false, true, null);
             Event.fireEvent(node, pressed);
         });
         waitForFxEvents();
 
         Platform.runLater(() -> {
-            MouseEvent dragged = new MouseEvent(
-                MouseEvent.MOUSE_DRAGGED,
-                endX, endY, endX, endY, MouseButton.PRIMARY, 1,
-                false, false, false, false, true, false, false, false, false, true, null
-            );
+            MouseEvent dragged = new MouseEvent(MouseEvent.MOUSE_DRAGGED, endX, endY, endX, endY, MouseButton.PRIMARY,
+                    1, false, false, false, false, true, false, false, false, false, true, null);
             Event.fireEvent(node, dragged);
         });
         waitForFxEvents();
 
         Platform.runLater(() -> {
-            MouseEvent released = new MouseEvent(
-                MouseEvent.MOUSE_RELEASED,
-                endX, endY, endX, endY, MouseButton.PRIMARY, 1,
-                false, false, false, false, true, false, false, false, false, true, null
-            );
+            MouseEvent released = new MouseEvent(MouseEvent.MOUSE_RELEASED, endX, endY, endX, endY, MouseButton.PRIMARY,
+                    1, false, false, false, false, true, false, false, false, false, true, null);
             Event.fireEvent(node, released);
         });
         waitForFxEvents();
     }
 
-    public static void simulateWindowClose(Stage stage) {
+    /**
+     * Simulates a window close by invoking the save logic directly on the provided app instance, then closing the
+     * stage. This avoids Platform.exit() (which would kill the test JVM) and the fragile Class.forName lookup of the
+     * test class.
+     */
+    public static void simulateWindowClose(Stage stage, HelloApplication app) {
         Platform.runLater(() -> {
             javafx.event.EventHandler<WindowEvent> originalHandler = stage.getOnCloseRequest();
             stage.setOnCloseRequest(e -> {
                 try {
-                    Class<?> testClass = Class.forName("schedule.assist.demo.e2e.ScheduleAppE2ETest");
-                    java.lang.reflect.Field appField = testClass.getDeclaredField("app");
-                    appField.setAccessible(true);
-                    Object appInstance = appField.get(null);
-                    if (appInstance != null) {
-                        java.lang.reflect.Field taskListField = schedule.assist.demo.ui.HelloApplication.class.getDeclaredField("taskList");
+                    if (app != null) {
+                        Field taskListField = HelloApplication.class.getDeclaredField("taskList");
                         taskListField.setAccessible(true);
-                        List<?> taskList = (List<?>) taskListField.get(appInstance);
+                        List<?> taskList = (List<?>) taskListField.get(app);
 
-                        java.lang.reflect.Field repoField = schedule.assist.demo.ui.HelloApplication.class.getDeclaredField("taskRepository");
+                        Field repoField = HelloApplication.class.getDeclaredField("taskRepository");
                         repoField.setAccessible(true);
-                        Object taskRepository = repoField.get(appInstance);
+                        Object taskRepository = repoField.get(app);
 
                         if (taskList != null && taskRepository != null) {
-                            boolean recoveredFromCorrupt = false;
-                            try {
-                                java.lang.reflect.Field corruptField = schedule.assist.demo.util.DataManager.class.getDeclaredField("recoveredFromCorrupt");
-                                corruptField.setAccessible(true);
-                                recoveredFromCorrupt = (boolean) corruptField.get(null);
-                            } catch (Exception ex) {
-                                // Ignore
-                            }
-
-                            if (!(recoveredFromCorrupt && taskList.isEmpty())) {
-                                List<schedule.assist.demo.model.TaskModel> modelList = new ArrayList<>();
-                                for (Object taskObj : taskList) {
-                                    if (taskObj instanceof schedule.assist.demo.ui.Task) {
-                                        modelList.add(((schedule.assist.demo.ui.Task) taskObj).toModel());
-                                    }
+                            List<TaskModel> modelList = new ArrayList<>();
+                            for (Object taskObj : taskList) {
+                                if (taskObj instanceof Task t) {
+                                    modelList.add(t.toModel());
                                 }
-                                java.lang.reflect.Method saveAllMethod = taskRepository.getClass().getMethod("saveAll", List.class);
-                                saveAllMethod.setAccessible(true);
-                                saveAllMethod.invoke(taskRepository, modelList);
                             }
+                            // Delegate to repository — DataManager's internal guard handles
+                            // the recoveredFromCorrupt + empty-list skip logic.
+                            Method saveAllMethod = taskRepository.getClass().getMethod("saveAll", List.class);
+                            saveAllMethod.invoke(taskRepository, modelList);
                         }
                     }
                 } catch (Exception ex) {

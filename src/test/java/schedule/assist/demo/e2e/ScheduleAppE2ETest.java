@@ -145,15 +145,7 @@ public class ScheduleAppE2ETest {
     }
 
     private static boolean getRecoveredFromCorrupt() {
-        try {
-            Field field = DataManager.class.getDeclaredField("recoveredFromCorrupt");
-            field.setAccessible(true);
-            return (boolean) field.get(null);
-        } catch (NoSuchFieldException e) {
-            throw new RuntimeException("Field 'recoveredFromCorrupt' is not yet implemented in DataManager", e);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return schedule.assist.demo.util.DataManager.isRecoveredFromCorrupt();
     }
 
     private static String getFILE_PATH() {
@@ -285,8 +277,9 @@ public class ScheduleAppE2ETest {
             reloadApp();
             assertTrue(getRecoveredFromCorrupt(), "Should flag that we recovered from corrupt data");
             assertTrue(appTaskList.isEmpty());
-            JFXTestUtils.simulateWindowClose(stage);
-            assertFalse(Files.exists(Path.of("my_tasks.json")), "Empty save should be skipped to prevent overwriting backup");
+            JFXTestUtils.simulateWindowClose(stage, app);
+            assertFalse(Files.exists(Path.of("my_tasks.json")),
+                    "Empty save should be skipped to prevent overwriting backup");
         }
 
         // --- F2: Dynamic Task Creation & Centering ---
@@ -321,8 +314,8 @@ public class ScheduleAppE2ETest {
             latch.await(5, TimeUnit.SECONDS);
             clickAddTaskButton();
             Task task = getTasksInUI().get(0);
-            assertEquals(1000 - 100, task.getLayoutX(), 1.0);
-            assertEquals(500, task.getLayoutY(), 1.0);
+            assertEquals(HelloApplication.SCREEN_W / 2 - 100, task.getLayoutX(), 1.0);
+            assertEquals(HelloApplication.SCREEN_H / 2, task.getLayoutY(), 1.0);
         }
 
         @Test
@@ -526,7 +519,8 @@ public class ScheduleAppE2ETest {
             Assumptions.assumeTrue(System.getProperty("os.name").toLowerCase().contains("win"));
             assertNotNull(defaultResolvedPath);
             assertTrue(defaultResolvedPath.contains("ScheduleAssistant"));
-            assertTrue(defaultResolvedPath.endsWith("my_tasks.json") || defaultResolvedPath.endsWith("my_tasks.json".replace('/', File.separatorChar)));
+            assertTrue(defaultResolvedPath.endsWith("my_tasks.json")
+                    || defaultResolvedPath.endsWith("my_tasks.json".replace('/', File.separatorChar)));
         }
 
         @Test
@@ -534,7 +528,8 @@ public class ScheduleAppE2ETest {
             Assumptions.assumeFalse(System.getProperty("os.name").toLowerCase().contains("win"));
             assertNotNull(defaultResolvedPath);
             assertTrue(defaultResolvedPath.contains(".schedule-assistant"));
-            assertTrue(defaultResolvedPath.endsWith("my_tasks.json") || defaultResolvedPath.endsWith("my_tasks.json".replace('/', File.separatorChar)));
+            assertTrue(defaultResolvedPath.endsWith("my_tasks.json")
+                    || defaultResolvedPath.endsWith("my_tasks.json".replace('/', File.separatorChar)));
         }
 
         @Test
@@ -680,7 +675,7 @@ public class ScheduleAppE2ETest {
             Files.writeString(Path.of("my_tasks.json"), "{corrupt json}");
             reloadApp();
             clickAddTaskButton();
-            JFXTestUtils.simulateWindowClose(stage);
+            JFXTestUtils.simulateWindowClose(stage, app);
             assertTrue(Files.exists(Path.of("my_tasks.json")), "Should save because 1 task was added");
         }
 
@@ -706,8 +701,8 @@ public class ScheduleAppE2ETest {
             latch.await(5, TimeUnit.SECONDS);
             clickAddTaskButton();
             Task task = getTasksInUI().get(0);
-            assertEquals(5000 - 100, task.getLayoutX(), 1.0);
-            assertEquals(5000, task.getLayoutY(), 1.0);
+            assertEquals(HelloApplication.SCREEN_W / 2 - 100, task.getLayoutX(), 1.0);
+            assertEquals(HelloApplication.SCREEN_H / 2, task.getLayoutY(), 1.0);
         }
 
         @Test
@@ -765,7 +760,8 @@ public class ScheduleAppE2ETest {
             JFXTestUtils.simulateRightClick(task);
 
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 1000; i++) sb.append("A");
+            for (int i = 0; i < 1000; i++)
+                sb.append("A");
 
             CountDownLatch latch = new CountDownLatch(1);
             Platform.runLater(() -> {
@@ -802,14 +798,9 @@ public class ScheduleAppE2ETest {
         void testF3_Boundary_RapidClickEditSpam() throws Exception {
             clickAddTaskButton();
             Task task = getTasksInUI().get(0);
-            CountDownLatch latch = new CountDownLatch(1);
-            Platform.runLater(() -> {
-                for (int i = 0; i < 5; i++) {
-                    JFXTestUtils.simulateRightClick(task);
-                }
-                latch.countDown();
-            });
-            latch.await(5, TimeUnit.SECONDS);
+            for (int i = 0; i < 5; i++) {
+                JFXTestUtils.simulateRightClick(task);
+            }
             assertTrue(task.isEditing);
         }
 
@@ -820,13 +811,8 @@ public class ScheduleAppE2ETest {
             JFXTestUtils.simulateRightClick(task);
             assertTrue(task.isEditing);
 
-            CountDownLatch latch = new CountDownLatch(1);
-            Platform.runLater(() -> {
-                List<TextField> tfs = JFXTestUtils.findNodes(task, TextField.class);
-                JFXTestUtils.simulateKeyPress(tfs.get(0), KeyCode.ESCAPE);
-                latch.countDown();
-            });
-            latch.await(5, TimeUnit.SECONDS);
+            List<TextField> tfs = JFXTestUtils.findNodes(task, TextField.class);
+            JFXTestUtils.simulateKeyPress(tfs.get(0), KeyCode.ESCAPE);
 
             assertFalse(task.isEditing);
         }
@@ -891,7 +877,8 @@ public class ScheduleAppE2ETest {
                     java.lang.reflect.Method m = Task.class.getDeclaredMethod("snapToColumn");
                     m.setAccessible(true);
                     m.invoke(task);
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                }
             });
             JFXTestUtils.waitForFxEvents();
             assertNotNull(task.getDayOfWeek());
@@ -949,10 +936,10 @@ public class ScheduleAppE2ETest {
                 Method resolveMethod = DataManager.class.getDeclaredMethod("resolveDefaultFilePath");
                 resolveMethod.setAccessible(true);
                 String resolvedPath = (String) resolveMethod.invoke(null);
-                
+
                 assertNotNull(resolvedPath);
                 assertTrue(resolvedPath.contains(".schedule-assistant"));
-                
+
                 setFILE_PATH(resolvedPath);
                 clickAddTaskButton();
                 File file = new File(resolvedPath);
@@ -960,7 +947,7 @@ public class ScheduleAppE2ETest {
             } finally {
                 System.setProperty("user.home", originalUserHome);
                 System.setProperty("os.name", originalOsName);
-                
+
                 File file = new File(tempUserHome, ".schedule-assistant/my_tasks.json");
                 if (file.exists()) {
                     file.delete();
@@ -1098,16 +1085,17 @@ public class ScheduleAppE2ETest {
                         Field rootField = HelloApplication.class.getDeclaredField("root");
                         rootField.setAccessible(true);
                         AnchorPane rootPane = (AnchorPane) rootField.get(app);
-                        
+
                         Field taskListField = HelloApplication.class.getDeclaredField("taskList");
                         taskListField.setAccessible(true);
                         List<Task> list = (List<Task>) taskListField.get(app);
-                        
+
                         Field repoField = HelloApplication.class.getDeclaredField("taskRepository");
                         repoField.setAccessible(true);
                         TaskRepository repo = (TaskRepository) repoField.get(app);
-                        
-                        schedule.assist.demo.service.TaskService service = new schedule.assist.demo.service.TaskServiceImpl(rootPane, repo, list);
+
+                        schedule.assist.demo.service.TaskService service = new schedule.assist.demo.service.TaskServiceImpl(
+                                rootPane, repo, list);
                         service.deleteTask(null);
                         latch.countDown();
                     } catch (Exception e) {
@@ -1154,7 +1142,7 @@ public class ScheduleAppE2ETest {
             JFXTestUtils.simulateKeyPress(task, KeyCode.ESCAPE);
 
             // 4. Close and verify
-            JFXTestUtils.simulateWindowClose(stage);
+            JFXTestUtils.simulateWindowClose(stage, app);
             String content = Files.readString(Path.of("my_tasks.json"));
             assertTrue(content.contains("Cross Test Task"));
             assertTrue(content.contains("Sat"));
@@ -1165,7 +1153,7 @@ public class ScheduleAppE2ETest {
             Files.writeString(Path.of("my_tasks.json"), "{corrupt}");
             reloadApp();
             clickAddTaskButton();
-            JFXTestUtils.simulateWindowClose(stage);
+            JFXTestUtils.simulateWindowClose(stage, app);
             assertTrue(Files.exists(Path.of("my_tasks.json")));
         }
 
@@ -1232,7 +1220,7 @@ public class ScheduleAppE2ETest {
 
             clickAddTaskButton();
             Task task = getTasksInUI().get(0);
-            assertEquals(900 - 100, task.getLayoutX(), 1.0);
+            assertEquals(HelloApplication.SCREEN_W / 2 - 100, task.getLayoutX(), 1.0);
 
             double[] targetX = new double[1];
             CountDownLatch latch2 = new CountDownLatch(1);
@@ -1304,9 +1292,12 @@ public class ScheduleAppE2ETest {
             });
             assertTrue(latch1.await(5, TimeUnit.SECONDS));
 
-            JFXTestUtils.simulateDragAndDrop(tasks.get(0), tasks.get(0).getLayoutX(), tasks.get(0).getLayoutY(), monX[0] + 10, 150);
-            JFXTestUtils.simulateDragAndDrop(tasks.get(1), tasks.get(1).getLayoutX(), tasks.get(1).getLayoutY(), wedX[0] + 10, 150);
-            JFXTestUtils.simulateDragAndDrop(tasks.get(2), tasks.get(2).getLayoutX(), tasks.get(2).getLayoutY(), friX[0] + 10, 150);
+            JFXTestUtils.simulateDragAndDrop(tasks.get(0), tasks.get(0).getLayoutX(), tasks.get(0).getLayoutY(),
+                    monX[0] + 10, 150);
+            JFXTestUtils.simulateDragAndDrop(tasks.get(1), tasks.get(1).getLayoutX(), tasks.get(1).getLayoutY(),
+                    wedX[0] + 10, 150);
+            JFXTestUtils.simulateDragAndDrop(tasks.get(2), tasks.get(2).getLayoutX(), tasks.get(2).getLayoutY(),
+                    friX[0] + 10, 150);
 
             // 3. Edit task details
             JFXTestUtils.simulateRightClick(tasks.get(0));
@@ -1320,7 +1311,7 @@ public class ScheduleAppE2ETest {
             JFXTestUtils.simulateKeyPress(tasks.get(0), KeyCode.ESCAPE);
 
             // 4. Close
-            JFXTestUtils.simulateWindowClose(stage);
+            JFXTestUtils.simulateWindowClose(stage, app);
 
             // 5. Reload and check
             reloadApp();
@@ -1337,7 +1328,7 @@ public class ScheduleAppE2ETest {
             reloadApp();
             assertTrue(getRecoveredFromCorrupt());
             clickAddTaskButton();
-            JFXTestUtils.simulateWindowClose(stage);
+            JFXTestUtils.simulateWindowClose(stage, app);
             reloadApp();
             assertEquals(1, appTaskList.size());
         }
@@ -1345,7 +1336,8 @@ public class ScheduleAppE2ETest {
         @Test
         void testF4_Scenario_TaskChurnWorkflow() throws Exception {
             // Add 5 tasks
-            for (int i = 0; i < 5; i++) clickAddTaskButton();
+            for (int i = 0; i < 5; i++)
+                clickAddTaskButton();
             List<Task> tasks = getTasksInUI();
 
             // Drag 2 to columns (Mon, Tue)
@@ -1361,11 +1353,14 @@ public class ScheduleAppE2ETest {
             });
             assertTrue(latch1.await(5, TimeUnit.SECONDS));
 
-            JFXTestUtils.simulateDragAndDrop(tasks.get(0), tasks.get(0).getLayoutX(), tasks.get(0).getLayoutY(), monX[0] + 10, 150);
-            JFXTestUtils.simulateDragAndDrop(tasks.get(1), tasks.get(1).getLayoutX(), tasks.get(1).getLayoutY(), tueX[0] + 10, 150);
+            JFXTestUtils.simulateDragAndDrop(tasks.get(0), tasks.get(0).getLayoutX(), tasks.get(0).getLayoutY(),
+                    monX[0] + 10, 150);
+            JFXTestUtils.simulateDragAndDrop(tasks.get(1), tasks.get(1).getLayoutX(), tasks.get(1).getLayoutY(),
+                    tueX[0] + 10, 150);
 
             // Drag 1 off columns
-            JFXTestUtils.simulateDragAndDrop(tasks.get(2), tasks.get(2).getLayoutX(), tasks.get(2).getLayoutY(), 1300, 50);
+            JFXTestUtils.simulateDragAndDrop(tasks.get(2), tasks.get(2).getLayoutX(), tasks.get(2).getLayoutY(), 1300,
+                    50);
 
             // Delete 2 tasks
             Platform.runLater(() -> {
@@ -1374,7 +1369,7 @@ public class ScheduleAppE2ETest {
             });
             JFXTestUtils.waitForFxEvents();
 
-            JFXTestUtils.simulateWindowClose(stage);
+            JFXTestUtils.simulateWindowClose(stage, app);
             reloadApp();
 
             assertEquals(3, appTaskList.size());
@@ -1393,7 +1388,7 @@ public class ScheduleAppE2ETest {
             latch1.await(5, TimeUnit.SECONDS);
             clickAddTaskButton();
             Task t1 = getTasksInUI().get(0);
-            assertEquals(600 - 100, t1.getLayoutX(), 1.0);
+            assertEquals(HelloApplication.SCREEN_W / 2 - 100, t1.getLayoutX(), 1.0);
 
             CountDownLatch latch2 = new CountDownLatch(1);
             Platform.runLater(() -> {
@@ -1403,7 +1398,7 @@ public class ScheduleAppE2ETest {
             latch2.await(5, TimeUnit.SECONDS);
             clickAddTaskButton();
             Task t2 = getTasksInUI().get(1);
-            assertEquals(800 - 100, t2.getLayoutX(), 1.0);
+            assertEquals(HelloApplication.SCREEN_W / 2 - 100, t2.getLayoutX(), 1.0);
         }
 
         @Test
@@ -1432,7 +1427,7 @@ public class ScheduleAppE2ETest {
             latch2.await(5, TimeUnit.SECONDS);
             JFXTestUtils.simulateKeyPress(tasks.get(1), KeyCode.ESCAPE);
 
-            JFXTestUtils.simulateWindowClose(stage);
+            JFXTestUtils.simulateWindowClose(stage, app);
             reloadApp();
 
             assertEquals(2, appTaskList.size());

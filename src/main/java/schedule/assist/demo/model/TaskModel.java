@@ -10,9 +10,10 @@ public class TaskModel {
     private double layoutX;
     private double layoutY;
 
-    public TaskModel() {}  // Gson cần cái này để deserialize
+    public TaskModel() {
+    } // Gson cần cái này để deserialize
 
-    public TaskModel(String title, String time,String place, String note, String dayOfWeek, double x, double y) {
+    public TaskModel(String title, String time, String place, String note, String dayOfWeek, double x, double y) {
         this.titleTask = title;
         this.timeOfTask = time;
         this.placeofTask = place;

@@ -7,8 +7,6 @@ import org.junit.jupiter.api.io.TempDir;
 import schedule.assist.demo.model.TaskModel;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -30,11 +28,18 @@ class DataManagerStressTest {
 
     private Path testFilePath;
 
+    // Helper: set the private recoveredFromCorrupt field via reflection.
+    private static void setRecoveredFromCorrupt(boolean value) throws Exception {
+        java.lang.reflect.Field f = DataManager.class.getDeclaredField("recoveredFromCorrupt");
+        f.setAccessible(true);
+        f.set(null, value);
+    }
+
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         testFilePath = tempDir.resolve("my_tasks_stress.json");
         DataManager.setFilePath(testFilePath.toString());
-        DataManager.recoveredFromCorrupt = false;
+        setRecoveredFromCorrupt(false);
     }
 
     @AfterEach
@@ -42,12 +47,12 @@ class DataManagerStressTest {
         java.lang.reflect.Method m = DataManager.class.getDeclaredMethod("resolveDefaultFilePath");
         m.setAccessible(true);
         DataManager.setFilePath((String) m.invoke(null));
-        DataManager.recoveredFromCorrupt = false;
+        setRecoveredFromCorrupt(false);
     }
 
     /**
-     * Test Task 6: Paths containing OS-reserved filenames on Windows.
-     * Checks if write fails gracefully without throwing unhandled runtime exceptions.
+     * Test Task 6: Paths containing OS-reserved filenames on Windows. Checks if write fails gracefully without throwing
+     * unhandled runtime exceptions.
      */
     @Test
     void testAbsoluteFilePath_ReservedNames() {
@@ -56,15 +61,14 @@ class DataManagerStressTest {
             // "NUL" is a reserved Windows filename. Trying to write to it should fail or be ignored.
             DataManager.setFilePath("NUL");
             List<TaskModel> tasks = Arrays.asList(new TaskModel("Reserved", "10:00", "Home", "Note", "Mon", 0.0, 0.0));
-            
+
             // Should not crash the application
             assertDoesNotThrow(() -> DataManager.saveTasks(tasks));
         }
     }
 
     /**
-     * Test Task 6: Target path is actually an existing directory.
-     * saveTasks should fail gracefully without crashing.
+     * Test Task 6: Target path is actually an existing directory. saveTasks should fail gracefully without crashing.
      */
     @Test
     void testAbsoluteFilePath_IsDirectory() {
@@ -89,7 +93,7 @@ class DataManagerStressTest {
 
         List<TaskModel> tasks = Arrays.asList(new TaskModel("LongPathTask", "10:00", "Home", "Note", "Mon", 0.0, 0.0));
         assertDoesNotThrow(() -> DataManager.saveTasks(tasks));
-        
+
         // If the OS supported the creation, we verify we can load it.
         // Windows might restrict creation if it exceeds MAX_PATH (260 chars) without long paths enabled.
         // The key is that the app must not crash.
@@ -102,48 +106,48 @@ class DataManagerStressTest {
     }
 
     /**
-     * Test Task 1: Robustness of the `recoveredFromCorrupt` flag state machine.
-     * Verifies transition of recoveredFromCorrupt state on load/save operations.
+     * Test Task 1: Robustness of the `recoveredFromCorrupt` flag state machine. Verifies transition of
+     * recoveredFromCorrupt state on load/save operations.
      */
     @Test
-    void testPreventDataWipe_StateTransitionWorkflow() throws IOException {
+    void testPreventDataWipe_StateTransitionWorkflow() throws Exception {
         // 1. Initial State: not recovered
-        assertFalse(DataManager.recoveredFromCorrupt);
+        assertFalse(DataManager.isRecoveredFromCorrupt());
 
         // 2. Corrupt file loaded: recovered becomes true, backup created
         Files.writeString(testFilePath, "{invalid: json");
         List<TaskModel> loaded = DataManager.loadTasks();
         assertTrue(loaded.isEmpty());
-        assertTrue(DataManager.recoveredFromCorrupt);
+        assertTrue(DataManager.isRecoveredFromCorrupt());
 
         // 3. Save empty list: should be skipped, recovered remains true
         DataManager.saveTasks(new ArrayList<>());
-        assertTrue(DataManager.recoveredFromCorrupt);
+        assertTrue(DataManager.isRecoveredFromCorrupt());
         assertFalse(Files.exists(testFilePath)); // Original file was backed up, no new file created
 
         // 4. Save null: should be skipped, recovered remains true
         DataManager.saveTasks(null);
-        assertTrue(DataManager.recoveredFromCorrupt);
+        assertTrue(DataManager.isRecoveredFromCorrupt());
         assertFalse(Files.exists(testFilePath));
 
         // 5. Save non-empty list: writes successfully, recovered becomes false
-        List<TaskModel> activeTasks = Arrays.asList(new TaskModel("Active Task", "12:00", "School", "Note", "Tue", 5.0, 10.0));
+        List<TaskModel> activeTasks = Arrays
+                .asList(new TaskModel("Active Task", "12:00", "School", "Note", "Tue", 5.0, 10.0));
         DataManager.saveTasks(activeTasks);
-        assertFalse(DataManager.recoveredFromCorrupt);
+        assertFalse(DataManager.isRecoveredFromCorrupt());
         assertTrue(Files.exists(testFilePath));
 
         // 6. Save empty list now: since recovered is false, it is NOT skipped, writing empty array to disk
         DataManager.saveTasks(new ArrayList<>());
-        assertFalse(DataManager.recoveredFromCorrupt);
+        assertFalse(DataManager.isRecoveredFromCorrupt());
         assertTrue(Files.exists(testFilePath));
-        
+
         List<TaskModel> reloaded = DataManager.loadTasks();
         assertTrue(reloaded.isEmpty());
     }
 
     /**
-     * Test Task 1 & 6: Concurrency stress testing.
-     * Spawns multiple threads performing concurrent reads and writes.
+     * Test Task 1 & 6: Concurrency stress testing. Spawns multiple threads performing concurrent reads and writes.
      * Evaluates thread safety behavior of shared static state in DataManager.
      */
     @Test
@@ -165,7 +169,8 @@ class DataManagerStressTest {
                         if (j % 2 == 0) {
                             // Writer thread action
                             List<TaskModel> list = new ArrayList<>();
-                            list.add(new TaskModel("Task " + threadId + "-" + j, "10:00", "Home", "Note", "Mon", 0.0, 0.0));
+                            list.add(new TaskModel("Task " + threadId + "-" + j, "10:00", "Home", "Note", "Mon", 0.0,
+                                    0.0));
                             DataManager.saveTasks(list);
                             writeSuccess.incrementAndGet();
                         } else {
@@ -186,7 +191,7 @@ class DataManagerStressTest {
         startLatch.countDown();
         boolean finished = endLatch.await(15, TimeUnit.SECONDS);
         executor.shutdown();
-        
+
         assertTrue(finished, "Concurrency test timed out!");
         assertTrue(writeSuccess.get() > 0);
         assertTrue(readSuccess.get() > 0);
@@ -200,15 +205,8 @@ class DataManagerStressTest {
         int taskCount = 10000;
         List<TaskModel> massiveList = new ArrayList<>();
         for (int i = 0; i < taskCount; i++) {
-            massiveList.add(new TaskModel(
-                "Task Title " + i + "_" + UUID.randomUUID(),
-                "Time " + i,
-                "Place " + i,
-                "Note content that is slightly longer to add body " + i,
-                "Day " + (i % 7),
-                i * 1.5,
-                i * 2.5
-            ));
+            massiveList.add(new TaskModel("Task Title " + i + "_" + UUID.randomUUID(), "Time " + i, "Place " + i,
+                    "Note content that is slightly longer to add body " + i, "Day " + (i % 7), i * 1.5, i * 2.5));
         }
 
         // Save
@@ -222,11 +220,11 @@ class DataManagerStressTest {
     }
 
     /**
-     * Test: saveTasks writes to a temp file and atomically replaces the original.
-     * On success, the temp file should be cleaned up.
+     * Test: saveTasks writes to a temp file and atomically replaces the original. On success, the temp file should be
+     * cleaned up.
      */
     @Test
-    void testAtomicWrite_TempFileCleanedUp() throws IOException {
+    void testAtomicWrite_TempFileCleanedUp() throws Exception {
         List<TaskModel> tasks = Arrays.asList(new TaskModel("T1", "10:00", "Home", "Note", "Mon", 0.0, 0.0));
         DataManager.saveTasks(tasks);
 
@@ -241,16 +239,16 @@ class DataManagerStressTest {
     }
 
     /**
-     * Test: if the parent directory is read-only, saveTasks should not crash.
-     * The file write may fail, but the original file should not be truncated.
+     * Test: if the parent directory is read-only, saveTasks should not crash. The file write may fail, but the original
+     * file should not be truncated.
      */
     @Test
-    void testAtomicWrite_InvalidPath_DoesNotCrash() {
+    void testAtomicWrite_InvalidPath_DoesNotCrash() throws Exception {
         DataManager.setFilePath("Z:\\nonexistent\\\\my_tasks.json");
-        DataManager.recoveredFromCorrupt = true;
+        setRecoveredFromCorrupt(true);
 
         List<TaskModel> tasks = Arrays.asList(new TaskModel("T1", "10:00", "Home", "Note", "Mon", 0.0, 0.0));
         assertDoesNotThrow(() -> DataManager.saveTasks(tasks));
-        assertTrue(DataManager.recoveredFromCorrupt, "Flag should remain true on write failure");
+        assertTrue(DataManager.isRecoveredFromCorrupt(), "Flag should remain true on write failure");
     }
 }
