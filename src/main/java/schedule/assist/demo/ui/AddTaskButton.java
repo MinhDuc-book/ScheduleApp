@@ -13,29 +13,12 @@ public class AddTaskButton extends Button {
     private static final double BUTTON_SIZE = 55.0;
 
     // ── Màu accent xanh lá — khác với cyan của task và tím của home ──
-    private final String DEFAULT_STYLE =
-            "-fx-background-color: #0D2137;" +   // nền tối giống task
-                    "-fx-background-radius: 30;" +
-                    "-fx-text-fill: #39FF14;" +           // chữ xanh lá neon
-                    "-fx-font-size: 28;" +
-                    "-fx-font-weight: bold;" +
-                    "-fx-cursor: hand;" +
-                    "-fx-border-color: #39FF14;" +        // viền xanh lá
-                    "-fx-border-radius: 30;" +
-                    "-fx-border-width: 1.5;" +
-                    "-fx-padding: 0;";
-
-    private final String HOVER_STYLE =
-            "-fx-background-color: #0D2137;" +
-                    "-fx-background-radius: 30;" +
-                    "-fx-text-fill: #39FF14;" +
-                    "-fx-font-size: 28;" +
-                    "-fx-font-weight: bold;" +
-                    "-fx-cursor: hand;" +
-                    "-fx-border-color: #39FF14;" +
-                    "-fx-border-radius: 30;" +
-                    "-fx-border-width: 1.5;" +
-                    "-fx-padding: 0;";
+    private final String DEFAULT_STYLE = "-fx-background-color: #0D2137;" + // nền tối giống task
+            "-fx-background-radius: 30;" + "-fx-text-fill: #39FF14;" + // chữ xanh lá neon
+            "-fx-font-size: 28;" + "-fx-font-weight: bold;" + "-fx-cursor: hand;" + "-fx-border-color: #39FF14;" + // viền
+                                                                                                                   // xanh
+                                                                                                                   // lá
+            "-fx-border-radius: 30;" + "-fx-border-width: 1.5;" + "-fx-padding: 0;";
 
     public AddTaskButton(TaskService taskService) {
         super("+");
@@ -63,20 +46,21 @@ public class AddTaskButton extends Button {
         hoverGlow.setSpread(0.5);
 
         this.setOnMouseEntered(e -> {
-            this.setStyle(HOVER_STYLE);
-            this.setEffect(hoverGlow); // ✅ glow mạnh hơn khi hover
+            this.setStyle(DEFAULT_STYLE);
+            this.setEffect(hoverGlow);
         });
 
         this.setOnMouseExited(e -> {
             this.setStyle(DEFAULT_STYLE);
-            this.setEffect(defaultGlow); // ✅ về glow bình thường
+            this.setEffect(defaultGlow);
         });
 
         // ── Tạo task mới ở giữa màn hình ─────────────────────────
         this.setOnAction(e -> {
             Task task = taskService.createTask();
-            task.setLayoutX(SCREEN_W / 2 - 100);
-            task.setLayoutY(SCREEN_H / 2);
+            task.setLayoutX(SCREEN_W / 2.0 - 100);
+            task.setLayoutY(SCREEN_H / 2.0);
+            task.onChange.run();
         });
     }
 }

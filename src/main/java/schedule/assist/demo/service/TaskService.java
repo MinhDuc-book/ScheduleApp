@@ -7,8 +7,12 @@ import java.util.List;
 
 public interface TaskService {
     Task createTask();
+
     void loadTask(TaskModel model);
+
     void deleteTask(Task task);
+
     void saveAll();
+
     List<Task> getAll();
 }

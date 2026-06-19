@@ -6,5 +6,6 @@ import java.util.List;
 
 public interface TaskRepository {
     List<TaskModel> loadAll();
+
     void saveAll(List<TaskModel> tasks);
 }

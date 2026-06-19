@@ -37,3 +37,9 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Codegraph ###
+.codegraph/
+
+### Runtime data ###
+my_tasks.json
