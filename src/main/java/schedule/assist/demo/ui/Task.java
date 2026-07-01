@@ -12,6 +12,8 @@ public class Task extends VBox {
 
     private double dragOffsetX, dragOffsetY;
 
+    protected final int TASK_HEIGHT = 80;
+    protected final int TASK_WIDTH = 170;
     protected String titleTask   = "Event";
     protected String timeOfTask  = "10:00";
     protected String placeofTask = "GĐ3";
@@ -32,6 +34,7 @@ public class Task extends VBox {
     public Label placeLabel;
 
     public Runnable onDelete = () -> {};
+    public Runnable onSnap = () -> {};
     public boolean isEditing = false;
 
     public String BASE_STYLE =
@@ -103,7 +106,7 @@ public class Task extends VBox {
                 BASE_STYLE;
     }
 
-    private void applyGlow() {
+    protected void applyGlow() {
         DropShadow glow = new DropShadow();
         glow.setOffsetX(0);
         glow.setOffsetY(0);
@@ -195,7 +198,7 @@ public class Task extends VBox {
                         "-fx-text-fill: #A8D8EA;"
         );
 
-        this.setPrefSize(170, 80);
+        this.setPrefSize(TASK_WIDTH, TASK_HEIGHT);
         this.setSpacing(NORMAL_SPACING);
 
         // Áp màu nền + viền theo place
@@ -229,15 +232,20 @@ public class Task extends VBox {
             this.setStyle(setColorFromPlace());
             applyGlow();
             snapToColumn();
+            onSnap.run();
         });
 
         this.setOnMouseClicked(e -> {
             if (e.getButton() == MouseButton.SECONDARY) {
-                bringToTop();
-                new TaskEditor(this).expandCardToEditor();
+                isEditing = true;
+
+                AnchorPane parent = (AnchorPane) this.getParent();
+                if (parent != null) {
+                    parent.getChildren().remove(this); // xóa thẻ gốc khỏi root
+                    new TaskEditor(this, parent).expandToEdit(); // mở overlay
+                }
             }
         });
-
         return this;
     }
 

@@ -1,65 +1,47 @@
 [
   {
-    "titleTask": "Tín hiệu hệ thống",
-    "timeOfTask": "9:50",
-    "placeofTask": "GĐ3",
-    "noteOfTask": "Note",
-    "dayOfWeek": "Mon",
-    "layoutX": 45.0,
-    "layoutY": 201.5
-  },
-  {
-    "titleTask": "Mạng máy tính",
-    "timeOfTask": "13:30",
-    "placeofTask": "GĐ4",
-    "noteOfTask": "Note",
+    "titleTask": "pwncollege",
+    "timeOfTask": "10:00",
+    "placeofTask": "Home",
+    "noteOfTask": "PWN/REV",
     "dayOfWeek": "Tue",
     "layoutX": 235.0,
-    "layoutY": 396.5
+    "layoutY": 310.5
   },
   {
-    "titleTask": "Mạng máy tính",
-    "timeOfTask": "16:20",
-    "placeofTask": "GĐ3",
-    "noteOfTask": "Note",
-    "dayOfWeek": "Wed",
-    "layoutX": 425.0,
-    "layoutY": 498.5
+    "titleTask": "TryHackMe",
+    "timeOfTask": "10:00",
+    "placeofTask": "Home",
+    "noteOfTask": "Advent to Cypher",
+    "dayOfWeek": "Sun",
+    "layoutX": 1185.0,
+    "layoutY": 292.5
   },
   {
-    "titleTask": "Công nghệ phần mềm",
-    "timeOfTask": "9:50",
-    "placeofTask": "GĐ3",
-    "noteOfTask": "Note",
+    "titleTask": "Udemy",
+    "timeOfTask": "10:00",
+    "placeofTask": "Home",
+    "noteOfTask": "Assembly",
     "dayOfWeek": "Thu",
     "layoutX": 615.0,
-    "layoutY": 282.5
+    "layoutY": 311.5
   },
   {
-    "titleTask": "TTS MH",
-    "timeOfTask": "16:20",
-    "placeofTask": "GĐ3",
-    "noteOfTask": "Note",
-    "dayOfWeek": "Thu",
-    "layoutX": 615.0,
-    "layoutY": 498.5
+    "titleTask": "Sửa lại web cá nhân",
+    "timeOfTask": "10:00",
+    "placeofTask": "Home",
+    "noteOfTask": "Lỗi HTTPS\nCập nhật thành tích",
+    "dayOfWeek": "Sat",
+    "layoutX": 995.0,
+    "layoutY": 295.5
   },
   {
-    "titleTask": "CNXH",
-    "timeOfTask": "7:00",
-    "placeofTask": "GĐ3",
-    "noteOfTask": "Note",
-    "dayOfWeek": "Fri",
-    "layoutX": 805.0,
-    "layoutY": 95.5
-  },
-  {
-    "titleTask": "CTF",
+    "titleTask": "ScheAsist",
     "timeOfTask": "10:00",
     "placeofTask": "Home",
     "noteOfTask": "Note",
-    "dayOfWeek": "Sun",
-    "layoutX": 1185.0,
-    "layoutY": 273.0
+    "dayOfWeek": "Wed",
+    "layoutX": 425.0,
+    "layoutY": 310.5
   }
 ]

@@ -30,7 +30,7 @@ public class Week {
 
     private VBox createDayCard(String dayName) {
         VBox card = new VBox(10);
-        card.setPrefSize(180, 600);
+        card.setPrefSize(180, 750);
         card.setMaxWidth(Double.MAX_VALUE);
         card.setAlignment(Pos.TOP_CENTER);
         card.setStyle(
@@ -58,3 +58,9 @@ public class Week {
         return card;
     }
 }
+
+// tao the moi, lay du lieu tu the cu
+// in the moi ra 1 toa do moi
+// chinh sua tren do roi cap nhat
+// tra nhung gia tri do cho the cu
+// quay ve vi tri the cu
