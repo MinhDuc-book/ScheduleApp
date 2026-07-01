@@ -1,5 +1,6 @@
 package schedule.assist.demo.service;
 
+import javafx.scene.control.Alert;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -21,22 +22,22 @@ public class TaskServiceImpl implements TaskService {
     private static final double TASK_HEIGHT = 100; // chiều cao cố định + khoảng cách giữa các task
     private static final double START_Y = 90;
 
+    private final double START_HOUR = 7;
+    private final double END_HOUR = 21;
+    private final double COL_TOP = START_Y;
+    private final double COL_END = 750 - COL_TOP - TASK_HEIGHT;
+
     public TaskServiceImpl(AnchorPane root, TaskRepository repository, List<Task> taskList) {
         this.root = root;
         this.repository = repository;
         this.taskList = taskList;
     }
 
-    // create Task card
-    @Override
-    public Task createTask() {
-        Task task = new Task();
-        task.onDelete = () -> {deleteTask(task);};
-        task.onSnap = () -> {reflowColumn(task.getDayOfWeek());};
-        root.getChildren().add(task);
-        taskList.add(task);
+    private double timeToY(String time) {
+        int minutes = timeToMinute(time);
+        double pixelPerMinute = (minutes - START_HOUR*60) / ((END_HOUR - START_HOUR)*60);
 
-        return task;
+        return COL_TOP + (COL_END * pixelPerMinute);
     }
 
     private void reflowColumn(String dayOfWeek) {
@@ -50,14 +51,38 @@ public class TaskServiceImpl implements TaskService {
                 taskInColumn.add(t);
             }
         }
+
         taskInColumn.sort(Comparator.comparingInt(t -> timeToMinute(t.getTimeOfTask())));
 
-        double y = START_Y;
-
         for (Task t : taskInColumn) {
+            double y = timeToY(t.getTimeOfTask());
+            int index = taskInColumn.indexOf(t);
+            for (Task t1 : taskInColumn.subList(0,index)) {
+                if (t1 != t && t.getTimeOfTask().equals(t1.getTimeOfTask())) {
+
+                    // Hiện Alert
+                    showConflictAlert(t, t1,dayOfWeek);
+
+                    root.getChildren().remove(t);
+                    taskList.remove(t);
+                    saveAll();
+                    return;
+                }
+            }
             t.setLayoutY(y);
-            y = y + TASK_HEIGHT;
         }
+    }
+
+    private void showConflictAlert(Task t, Task t1, String dayOfWeek) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Trùng lịch");
+        alert.setHeaderText(null);
+        alert.setContentText(
+                "\"" + t.getTitleTask() + "\" bị trùng giờ " +
+                        t.getTimeOfTask() + " với \"" + t1.getTitleTask() +
+                        "\" trong ngày " + dayOfWeek
+        );
+        alert.showAndWait();
     }
 
     private int timeToMinute(String timeOfTask) {
@@ -96,6 +121,18 @@ public class TaskServiceImpl implements TaskService {
             }
 
         }
+    }
+
+    // create Task card
+    @Override
+    public Task createTask() {
+        Task task = new Task();
+        task.onDelete = () -> {deleteTask(task);};
+        task.onSnap = () -> {reflowColumn(task.getDayOfWeek());};
+        root.getChildren().add(task);
+        taskList.add(task);
+
+        return task;
     }
 
     // load Task card from file with same attribute
